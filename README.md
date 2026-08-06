@@ -55,34 +55,92 @@ Step 7: Save Your Work
 
 ## Code:
 ```
-#define echoPin 2
-#define trigPin 3
-long duration;
-int distance;
-void setup()
+#include "ArduinoGraphics.h"
+#include "Arduino_LED_Matrix.h"
+
+ArduinoLEDMatrix matrix;
+
+#define TRIG_PIN 9
+#define ECHO_PIN 10
+
+// 3x5 font for digits
+const byte digits[10][5] = {
+  {0b111,0b101,0b101,0b101,0b111}, //0
+  {0b010,0b110,0b010,0b010,0b111}, //1
+  {0b111,0b001,0b111,0b100,0b111}, //2
+  {0b111,0b001,0b111,0b001,0b111}, //3
+  {0b101,0b101,0b111,0b001,0b001}, //4
+  {0b111,0b100,0b111,0b001,0b111}, //5
+  {0b111,0b100,0b111,0b101,0b111}, //6
+  {0b111,0b001,0b010,0b100,0b100}, //7
+  {0b111,0b101,0b111,0b101,0b111}, //8
+  {0b111,0b101,0b111,0b001,0b111}  //9
+};
+
+void drawDigit(int digit, int x, int y)
 {
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  Serial.begin(9600);
+  for (int row = 0; row < 5; row++)
+  {
+    for (int col = 0; col < 3; col++)
+    {
+      if (digits[digit][row] & (1 << (2 - col)))
+        matrix.point(x + col, y + row);
+    }
+  }
 }
-void loop()
-{
-  digitalWrite(trigPin, LOW);
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  matrix.begin();
+}
+
+void loop() {
+
+  digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
+
+  digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2;
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  float distance = duration * 0.0343 / 2.0;
+
+  int d = (int)(distance + 0.5);
+
+  if (d > 99) d = 99;
+  if (d < 0) d = 0;
+
   Serial.print("Distance: ");
-  Serial.print(distance);
+  Serial.print(d);
   Serial.println(" cm");
+
+  int tens = d / 10;
+  int ones = d % 10;
+
+  matrix.beginDraw();
+  matrix.clear();
+  matrix.stroke(0xFFFFFFFF);
+
+  // Left digit
+  drawDigit(tens, 1, 1);
+
+  // Right digit
+  drawDigit(ones, 7, 1);
+
+  matrix.endDraw();
+
+  delay(100);
 }
 ```
 
 ## Output:
  
-<img width="1915" height="868" alt="image" src="https://github.com/user-attachments/assets/34a22f09-93c4-4f4a-ac5e-e811da6130c3" />
+<img width="849" height="578" alt="image" src="https://github.com/user-attachments/assets/64a86f81-ddb8-4f8d-979b-42589803cd48" />
 
 
 ## Result
